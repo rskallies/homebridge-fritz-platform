@@ -4,10 +4,13 @@ const logger = require('../../utils/logger');
 const { UUIDgenerate } = require('../../utils/utils');
 const Config = require('./smarthome.config');
 
+const sanitizeName = (name) => name.replace(/[^\p{L}\p{N} ']/gu, '').replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '').trim();
+
 const Setup = (devices, smarthomeConfig) => {
   smarthomeConfig.forEach((config) => {
     let error = false;
     const device = Config(config);
+    const originalName = device.name;
 
     if (!device.group) {
       if (!device.active) {
@@ -50,7 +53,10 @@ const Setup = (devices, smarthomeConfig) => {
     }
 
     if (!error) {
-      const uuid = UUIDgenerate(device.name);
+      // UUIDs use the original name to preserve existing HomeKit pairings;
+      // display names are sanitized to meet HAP character requirements.
+      device.name = sanitizeName(originalName);
+      const uuid = UUIDgenerate(originalName);
 
       if (devices.has(uuid)) {
         logger.warn('Multiple devices are configured with this name. Duplicate devices will be skipped.', device.name);
@@ -74,7 +80,7 @@ const Setup = (devices, smarthomeConfig) => {
             ain: device.ain,
           };
 
-          const uuidTemp = UUIDgenerate(tempDevice.name);
+          const uuidTemp = UUIDgenerate(originalName + ' Temperature');
           if (devices.has(uuidTemp)) {
             logger.warn(
               'Multiple devices are configured with this name. Duplicate devices will be skipped.',
@@ -98,7 +104,7 @@ const Setup = (devices, smarthomeConfig) => {
             ain: device.ain,
           };
 
-          const uuidTemp = UUIDgenerate(humidityDevice.name);
+          const uuidTemp = UUIDgenerate(originalName + ' Humidity');
           if (devices.has(uuidTemp)) {
             logger.warn(
               'Multiple devices are configured with this name. Duplicate devices will be skipped.',
@@ -120,7 +126,7 @@ const Setup = (devices, smarthomeConfig) => {
               ain: device.ain,
             };
 
-            const uuidWindow = UUIDgenerate(windowDevice.name);
+            const uuidWindow = UUIDgenerate(originalName + ' Window');
             if (devices.has(uuidWindow)) {
               logger.warn(
                 'Multiple devices are configured with this name. Duplicate devices will be skipped.',
@@ -140,7 +146,7 @@ const Setup = (devices, smarthomeConfig) => {
               ain: device.ain,
             };
 
-            const uuidWindow = UUIDgenerate(openWindowDevice.name);
+            const uuidWindow = UUIDgenerate(originalName + ' Open Window');
             if (devices.has(uuidWindow)) {
               logger.warn(
                 'Multiple devices are configured with this name. Duplicate devices will be skipped.',

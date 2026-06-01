@@ -5,10 +5,13 @@ const logger = require('../../utils/logger');
 const { UUIDgenerate } = require('../../utils/utils');
 const Config = require('./router.config');
 
+const sanitizeName = (name) => name.replace(/[^\p{L}\p{N} ']/gu, '').replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '').trim();
+
 const Setup = (devices, routerConfig, extrasConfig, optionsConfig, meshMaster) => {
   routerConfig.forEach((config) => {
     let error = false;
     const device = Config(config, extrasConfig, optionsConfig);
+    const originalName = device.name;
 
     if (!device.active) {
       error = true;
@@ -21,7 +24,8 @@ const Setup = (devices, routerConfig, extrasConfig, optionsConfig, meshMaster) =
     }
 
     if (!error) {
-      const uuid = UUIDgenerate(device.name);
+      device.name = sanitizeName(originalName);
+      const uuid = UUIDgenerate(originalName);
 
       if (devices.has(uuid)) {
         logger.warn('Multiple devices are configured with this name. Duplicate devices will be skipped.', device.name);
@@ -53,7 +57,7 @@ const Setup = (devices, routerConfig, extrasConfig, optionsConfig, meshMaster) =
             parent: device.name,
           };
 
-          const uuidSwitch = UUIDgenerate(extraSwitch.name);
+          const uuidSwitch = UUIDgenerate(originalName + ' ' + (formattedName[0].toUpperCase() + formattedName.substring(1)));
 
           if (devices.has(uuidSwitch)) {
             logger.warn(
